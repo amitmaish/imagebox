@@ -4,6 +4,7 @@ description = "command line image utility"
 version = "0.1.0"
 edition = "2021"
 license = "MIT or Apachie 2.0"
+repository = "https://github.com/amitmaish/imagebox.git"
 
 [dependencies]
 image = "0.25.5"
