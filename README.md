@@ -1,3 +1,3 @@
 # imagebox
 
-tui image editor
+command line image processor
