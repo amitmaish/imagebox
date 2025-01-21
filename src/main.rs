@@ -23,22 +23,23 @@ struct Configuration<'a> {
 
 #[derive(Debug)]
 enum Effects {
-    _Pass,
-    _Blur(f32),
-    _Invert,
+    Pass,
+    Blur(f32),
+    Contrast(f32),
+    Invert,
 }
 
 #[derive(Debug)]
 struct Layer {
     image: image::DynamicImage,
-    _effect_chain: Vec<Effects>,
+    effect_chain: Vec<Effects>,
 }
 
 impl Layer {
-    fn new(image: image::DynamicImage) -> Self {
+    fn new() -> Self {
         Self {
-            image,
-            _effect_chain: Vec::new(),
+            image: image::DynamicImage::new_rgb32f(1, 1),
+            effect_chain: Vec::new(),
         }
     }
 }
@@ -49,6 +50,8 @@ fn main() {
         output: Output::Dump,
     };
 
+    let mut layers = Vec::new();
+    layers.push(Layer::new());
     let mut args = env::args();
 
     let _ = args.next(); // ignore first item
@@ -62,6 +65,38 @@ fn main() {
             }
             "-o" => {
                 config.output = Output::Path(String::from(args.next().unwrap().trim()));
+            }
+            // effects
+            "-pass" => {
+                layers.last_mut().unwrap().effect_chain.push(Effects::Pass);
+            }
+            "-blur" => {
+                layers.last_mut().unwrap().effect_chain.push(Effects::Blur(
+                    args.next()
+                        .expect("blur needs an argument")
+                        .trim()
+                        .parse::<f32>()
+                        .expect("blur argument must be an f32"),
+                ));
+            }
+            "-contrast" => {
+                layers.last_mut().unwrap().effect_chain.push(Effects::Contrast(
+                    args.next()
+                        .expect("contrast needs an argument")
+                        .trim()
+                        .parse::<f32>()
+                        .expect("contrast argument must be an f32"),
+                ));
+            }
+            "-invert" => {
+                layers
+                    .last_mut()
+                    .unwrap()
+                    .effect_chain
+                    .push(Effects::Invert);
+            }
+            "-layer" => {
+                layers.push(Layer::new());
             }
             "-pipe" => {
                 config.input = Input::Pipe;
@@ -82,7 +117,7 @@ fn main() {
         }
     }
 
-    let imgbuf = match config.input {
+    layers.first_mut().unwrap().image = match config.input {
         Input::Pipe => {
             let mut buf: Vec<u8> = Vec::new();
             let stdin = std::io::stdin();
@@ -102,16 +137,22 @@ fn main() {
                 .unwrap()
                 .decode()
                 .unwrap()
-       }
+        }
         Input::Path(None) => panic!("input needed"),
         Input::Path(Some(path)) => image::ImageReader::open(path).unwrap().decode().unwrap(),
     };
 
-    let mut layers = Vec::new();
-    layers.push(Layer::new(imgbuf));
-
-    for _layer in layers.iter() {
-        eprintln!("hi");
+    for layer in layers.iter_mut() {
+        eprintln!("layer:");
+        for effect in layer.effect_chain.iter() {
+            eprintln!("    {:?}", effect);
+            match effect {
+                Effects::Pass => (),
+                Effects::Blur(s) => layer.image = layer.image.blur(*s),
+                Effects::Contrast(x) => layer.image = layer.image.adjust_contrast(*x),
+                Effects::Invert => layer.image.invert(),
+            }
+        }
     }
 
     let output_image = layers.first().unwrap().image.clone();

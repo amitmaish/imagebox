@@ -1,6 +1,6 @@
 [package]
 name = "imagebox"
-description = "tui image editor"
+description = "command line image utility"
 version = "0.1.0"
 edition = "2021"
 
