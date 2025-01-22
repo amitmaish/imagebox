@@ -45,6 +45,8 @@ impl Layer {
 }
 
 fn main() {
+    eprintln!("\nimagebox\n");
+
     let mut config = Configuration {
         input: Input::Path(None),
         output: Output::Dump,
@@ -80,13 +82,17 @@ fn main() {
                 ));
             }
             "-contrast" => {
-                layers.last_mut().unwrap().effect_chain.push(Effects::Contrast(
-                    args.next()
-                        .expect("contrast needs an argument")
-                        .trim()
-                        .parse::<f32>()
-                        .expect("contrast argument must be an f32"),
-                ));
+                layers
+                    .last_mut()
+                    .unwrap()
+                    .effect_chain
+                    .push(Effects::Contrast(
+                        args.next()
+                            .expect("contrast needs an argument")
+                            .trim()
+                            .parse::<f32>()
+                            .expect("contrast argument must be an f32"),
+                    ));
             }
             "-invert" => {
                 layers
